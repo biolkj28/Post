@@ -1,0 +1,327 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        .table > tbody > tr > td {
+            text-align: center;
+            vertical-align: center;
+        }
+
+        .table > tbody > tr > td > .btn {
+            padding-top: 0px;
+            padding-bottom: 0px;
+            border: none;
+        }
+
+        #comment-box {
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        #comment-box::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <title>Hello, world!</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            if ($.cookie('token')) {
+                $.ajaxSetup({
+                    headers: {
+                        'Authorization': $.cookie('token')
+                    }
+                })
+
+            }
+        })
+
+        function updatePost() {
+            let id = $('#id').val();
+
+            let data = {
+                'title': document.getElementById('title').innerText,
+                'contents': $('#floatingTextarea2').val()
+            }
+
+            $.ajax({
+                type: "put",
+                url: `/api/updatePost/${id}`,
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (!!response.message) {
+                        alert(response.message)
+                    } else if (!!response.denied) {
+                        alert(response.denied);
+                    }
+                    location.href = "/";
+                },
+                error: function (request, status, error) {
+                    if (request.status === 401) {
+                        alert("로그인을 해주세요");
+                        window.location.href = '/user/loginView';
+                    }
+                }
+            })
+        }
+
+        function deletePost() {
+            let id = $('#id').val();
+
+
+            let check = confirm("정말 삭제 하시겠습니까?");
+
+            if (check) {
+                $.ajax({
+                    type: "post",
+                    url: `/api/deletePost/${id}`,
+                    success: function (response) {
+                        if (!!response.message) {
+                            alert(response.message)
+                        } else if (!!response.denied) {
+                            alert(response.denied);
+                        }
+                        location.href = "/";
+                    },
+                    error: function (request, status, error) {
+                        if (request.status === 401) {
+                            alert("로그인을 해주세요");
+                            window.location.href = '/user/loginView';
+                        }
+                    }
+                })
+            } else {
+                return false;
+            }
+
+        }
+
+        function createComments(post_id) {
+            let data = {
+                "comments": $("#comments-area").val(),
+                "post_id": post_id
+            }
+            console.log($("#comments-area").val())
+            $.ajax({
+                type: "post",
+                url: `/api/comments/writeComments`,
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (!!response.message) {
+                        alert(response.message)
+                    } else if (!!response.denied) {
+                        alert(response.denied);
+                    }
+                    location.reload();
+                },
+                error: function (request, status, error) {
+                    if (request.status === 401) {
+                        alert("로그인을 해주세요");
+                        window.location.href = '/user/loginView';
+                    }
+                }
+            })
+
+        }
+        function goModal(e){
+
+            let text = e.parentNode.parentNode.children[2].innerHTML;
+            let id = e.parentNode.parentNode.children[1].innerHTML;
+            const input = $("#comments-update-area")
+            const id_input = $("#comments-id-Update")
+            const comments_ori = $("#comments-ori")
+            input.val(text)
+            id_input.val(id);
+            comments_ori.val(text);
+
+        }
+        function updateComments() {
+
+            let text = $("#comments-update-area").val()
+            let id = $("#comments-id-Update").val()
+            let ori = $("#comments-ori").val()
+            if(ori === text){
+                alert("변경된 내용이 없습니다.");
+                return false;
+            }
+
+            let data = {
+                'comments': text,
+            }
+
+            $.ajax({
+                type: "put",
+                url: `/api/comments/updateComments/${id}`,
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (!!response.message) {
+                        alert(response.message)
+                    } else if (!!response.denied) {
+                        alert(response.denied);
+                    }
+                    location.reload();
+                },
+                error: function (request, status, error) {
+                    if (request.status === 401) {
+                        alert("로그인을 해주세요");
+                        window.location.href = '/user/loginView';
+                    }
+                }
+            })
+        }
+
+        function deleteComments(comments_id) {
+
+            let check = confirm("정말 삭제 하시겠습니까?");
+
+            if (check) {
+                $.ajax({
+                    type: "post",
+                    url: `/api/comments/deleteComments/${comments_id}`,
+                    success: function (response) {
+                        if (!!response.message) {
+                            alert(response.message)
+                        } else if (!!response.denied) {
+                            alert(response.denied);
+                        }
+                        location.reload();
+                    },
+                    error: function (request, status, error) {
+                        if (request.status === 401) {
+                            alert("로그인을 해주세요");
+                            window.location.href = '/user/loginView';
+                        }
+                    }
+                })
+            } else {
+                return false;
+            }
+
+        }
+    </script>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid ">
+            <h1 style="margin: auto; color: white;">POST</h1>
+        </div>
+    </nav>
+</header>
+<main>
+    <div class="container-fluid">
+        <div class="row mt-3 p-3">
+            <div class="col-md-4">
+                <input type="hidden" id="id" th:value="${post.id}">
+                <div class="input-group mb-3 ">
+                    <span class="input-group-text" id="basic-addon1">Writer</span>
+                    <input type="text" class="form-control" placeholder="Username" aria-label="Username"
+                           aria-describedby="basic-addon1" th:value="${post.writer}" readonly>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <b>Title : <span id="title" th:text="${post.title}"></span></b>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-floating">
+                            <textarea class="form-control " placeholder="Leave a comment here" id="floatingTextarea2"
+                                      style="height: 250px" th:text="${post.contents}"></textarea>
+                            <label for="floatingTextarea2">POST</label>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <div class="float-end">
+                            <button type="button" class="btn btn-outline-secondary " onclick="updatePost()"><b>수정</b>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="deletePost()"><b>삭제</b>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row p-3">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="댓글" aria-label="Recipient's username"
+                                   aria-describedby="writeComment" id="comments-area">
+                            <button class="btn btn-outline-secondary" type="button" id="writeComment"
+                                    th:onclick="|createComments(${post.id} )|"><i
+                                    class='bx bx-send'></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="comment-box">
+
+                        <table class="table mt-1">
+                            <tbody>
+                            <tr th:each="comment:${comments}">
+                                <th scope="row" width="5%" th:text="${commentStat.count}"></th>
+                                <td style="display: none" id="comments-Id" th:text="${comment.id}"></td>
+                                <td width="55%" th:text="${comment.comments}"></td>
+                                <td width="10%" th:text="${comment.writer}"></td>
+                                <td width="10%" th:text="${comment.createAt}"></td>
+                                <td width="10%">
+                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal"
+                                            data-bs-target="#exampleModal" onclick="goModal(this)" >
+                                        <i class='bx bx-edit-alt'></i></button>
+                                    <button class="btn btn-outline-secondary" type="button"
+                                            th:onclick="|deleteComments(${comment.id})|"><i class='bx bx-trash'></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+<!--수정 모달 창-->
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header p-2">
+                <b class="modal-title" id="exampleModalLabel">댓글 수정</b>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input style="display: none" id = "comments-id-Update">
+                <input style="display: none" id = "comments-ori">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="댓글" aria-label="Recipient's username"
+                           aria-describedby="writeComment" id="comments-update-area">
+                    <button class="btn btn-outline-secondary" type="button" id="updateComment" onclick="updateComments()"> <i class='bx bx-edit-alt'></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
